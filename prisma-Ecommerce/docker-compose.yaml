@@ -1,0 +1,54 @@
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ecommerce
+    ports:
+      - "54321:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ecommerce_backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - PORT=3030
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ecommerce?schema=public
+      - JWT_SECRET=secret
+      - PAYPAL_CLIENT_ID=AaC7p58g8in2QUGktUCX0Tz9iWMNN0na8QY38F4PAuI_3LQX_WVtKIE6fuYxY4G4GTvd_4bQcmYscn-O
+      - PAYPAL_CLIENT_SECRET=EKG8oFuzE7bqEuw8lx4r7sidROj-4o9uafp-_pEs1YKoHDaeGYw7LZDstHN9ZVL_vol8Sos-N8Lx0JVj
+      - FRONTEND_URL=http://localhost:3000
+    ports:
+      - "3030:3030"
+    volumes:
+      - backend_storage:/app/storage
+    networks:
+      app_network:
+        aliases:
+          - localhost.internal
+    restart: unless-stopped
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  backend_storage:
