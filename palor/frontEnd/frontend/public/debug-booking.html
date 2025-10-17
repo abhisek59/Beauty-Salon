@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Booking Issue</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { margin: 5px; padding: 10px 15px; background: #e91e63; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Booking Issue</h1>
+    
+    <div class="section">
+        <h2>1. Check Authentication Status</h2>
+        <button onclick="checkAuth()">Check Auth Status</button>
+        <div id="authStatus"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. Login</h2>
+        <button onclick="doLogin()">Login as John Doe</button>
+        <div id="loginResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. Test Service Booking Navigation</h2>
+        <button onclick="testBooking()">Test Book Service</button>
+        <div id="bookingResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>4. Direct API Test</h2>
+        <button onclick="testServiceAPI()">Test Service API</button>
+        <div id="apiResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>5. Debug Logs</h2>
+        <button onclick="clearLogs()">Clear Logs</button>
+        <div id="debugLogs" class="log"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('debugLogs');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            console.log(message);
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            const refreshToken = localStorage.getItem('refreshToken');
+            
+            let result = '<h3>Authentication Status:</h3>';
+            result += `<p><strong>Token:</strong> ${token ? 'EXISTS ✅' : 'MISSING ❌'}</p>`;
+            result += `<p><strong>Refresh Token:</strong> ${refreshToken ? 'EXISTS ✅' : 'MISSING ❌'}</p>`;
+            result += `<p><strong>User Data:</strong> ${user ? 'EXISTS ✅' : 'MISSING ❌'}</p>`;
+            
+            if (user) {
+                try {
+                    const userData = JSON.parse(user);
+                    result += `<p><strong>User Name:</strong> ${userData.firstname} ${userData.lastname}</p>`;
+                    result += `<p><strong>Email:</strong> ${userData.email}</p>`;
+                    result += `<p><strong>Role:</strong> ${userData.role}</p>`;
+                } catch (e) {
+                    result += `<p style="color: red;">Error parsing user data: ${e.message}</p>`;
+                }
+            }
+            
+            document.getElementById('authStatus').innerHTML = result;
+            
+            log(`Auth Check: Token ${token ? 'exists' : 'missing'}, User ${user ? 'exists' : 'missing'}`);
+        }
+
+        async function doLogin() {
+            try {
+                log('Starting login process...');
+                document.getElementById('loginResult').innerHTML = 'Logging in...';
+                
+                const response = await fetch('http://localhost:8000/api/v1/users/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'john.doe@example.com',
+                        password: 'Password123!'
+                    })
+                });
+                
+                const data = await response.json();
+                log(`Login response: ${JSON.stringify(data)}`);
+                
+                if (data.success) {
+                    const { user, accessToken, refreshToken } = data.message;
+                    
+                    localStorage.setItem('token', accessToken);
+                    localStorage.setItem('refreshToken', refreshToken);
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    // Dispatch auth event
+                    window.dispatchEvent(new Event('authStateChanged'));
+                    
+                    document.getElementById('loginResult').innerHTML = 
+                        `<span style="color: green;">✅ Logged in as: ${user.firstname} ${user.lastname}</span>`;
+                    
+                    log(`Login successful: ${user.firstname} ${user.lastname}`);
+                } else {
+                    document.getElementById('loginResult').innerHTML = 
+                        `<span style="color: red;">❌ Login failed: ${data.message}</span>`;
+                    
+                    log(`Login failed: ${data.message}`);
+                }
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = 
+                    `<span style="color: red;">❌ Error: ${error.message}</span>`;
+                
+                log(`Login error: ${error.message}`);
+            }
+        }
+
+        function testBooking() {
+            log('Testing booking navigation...');
+            
+            const token = localStorage.getItem('token');
+            const serviceId = '687e697834fe98296c56533b'; // Eyelashes extension service
+            
+            if (!token) {
+                const loginUrl = `http://localhost:5174/login`;
+                const returnUrl = `http://localhost:5174/booking/${serviceId}`;
+                
+                document.getElementById('bookingResult').innerHTML = 
+                    `<p>❌ Not logged in. Would redirect to: <a href="${loginUrl}" target="_blank">${loginUrl}</a></p>
+                     <p>Return URL would be: <a href="${returnUrl}" target="_blank">${returnUrl}</a></p>`;
+                
+                log(`Not logged in - would redirect to login with return URL: ${returnUrl}`);
+                return;
+            }
+            
+            const bookingUrl = `http://localhost:5174/booking/${serviceId}`;
+            document.getElementById('bookingResult').innerHTML = 
+                `<p>✅ Logged in! Would navigate to: <a href="${bookingUrl}" target="_blank">${bookingUrl}</a></p>
+                 <p><button onclick="window.open('${bookingUrl}', '_blank')">Open Booking Page</button></p>`;
+            
+            log(`Logged in - would navigate to: ${bookingUrl}`);
+        }
+
+        async function testServiceAPI() {
+            try {
+                log('Testing service API...');
+                const serviceId = '687e697834fe98296c56533b';
+                
+                const response = await fetch(`http://localhost:8000/api/v1/services/getServiceById/${serviceId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const service = data.message;
+                    document.getElementById('apiResult').innerHTML = 
+                        `<h3>✅ Service API Working</h3>
+                         <p><strong>Name:</strong> ${service.name}</p>
+                         <p><strong>Price:</strong> $${service.price}</p>
+                         <p><strong>Duration:</strong> ${service.duration} minutes</p>
+                         <p><strong>Active:</strong> ${service.isActive ? 'Yes' : 'No'}</p>`;
+                    
+                    log(`Service API working: ${service.name} - $${service.price}`);
+                } else {
+                    document.getElementById('apiResult').innerHTML = 
+                        `<p style="color: red;">❌ Service API failed: ${data.message}</p>`;
+                    
+                    log(`Service API failed: ${data.message}`);
+                }
+            } catch (error) {
+                document.getElementById('apiResult').innerHTML = 
+                    `<p style="color: red;">❌ API Error: ${error.message}</p>`;
+                
+                log(`Service API error: ${error.message}`);
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('debugLogs').innerHTML = '';
+        }
+
+        // Auto-check auth on page load
+        window.onload = function() {
+            checkAuth();
+            log('Debug page loaded');
+        };
+    </script>
+</body>
+</html>

@@ -9,7 +9,7 @@ import { ApiResponse } from '../utils/apiResponse.js';
 const getDashboardOverview = asyncHandler(async (req, res) => {
     const { startDate, endDate } = req.query;
     
-    // Date range filter
+    // Date range filter for createdAt / transactionDate
     const dateFilter = {};
     if (startDate && endDate) {
         dateFilter.createdAt = { 
@@ -38,9 +38,25 @@ const getDashboardOverview = asyncHandler(async (req, res) => {
         status: 'cancelled' 
     });
 
+    // Count today's appointments specifically (appointments with appointmentDate equal to today)
+    const startOfToday = new Date();
+    startOfToday.setHours(0,0,0,0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23,59,59,999);
+
+    const todayAppointments = await Appointment.countDocuments({
+        appointmentDate: { $gte: startOfToday, $lte: endOfToday }
+    });
+
     // Get revenue statistics
+    // Build match for transactions: use createdAt if dateFilter applied
+    const txMatch = {};
+    if (startDate && endDate) {
+        txMatch.createdAt = dateFilter.createdAt;
+    }
+
     const revenueData = await Transaction.aggregate([
-        { $match: dateFilter },
+        { $match: txMatch },
         { 
             $group: { 
                 _id: null, 
@@ -54,23 +70,16 @@ const getDashboardOverview = asyncHandler(async (req, res) => {
     const totalTransactions = revenueData[0]?.totalTransactions || 0;
 
     return res.status(200).json(new ApiResponse(200, {
-        users: {
-            totalCustomers: totalUsers,
-            totalStaff: totalStaff
-        },
-        appointments: {
-            total: totalAppointments,
-            completed: completedAppointments,
-            pending: pendingAppointments,
-            cancelled: cancelledAppointments
-        },
-        revenue: {
-            totalRevenue,
-            totalTransactions
-        },
-        services: {
-            totalServices
-        }
+        totalUsers,
+        totalStaff,
+        totalServices,
+        totalAppointments,
+        completedAppointments,
+        pendingAppointments,
+        cancelledAppointments,
+        todayAppointments,
+        totalRevenue,
+        totalTransactions
     }, "Dashboard overview fetched successfully"));
 });
 

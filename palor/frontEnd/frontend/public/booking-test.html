@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        button { margin: 5px; padding: 10px 15px; }
+        .service-card { 
+            border: 1px solid #ccc; 
+            margin: 10px 0; 
+            padding: 15px; 
+            border-radius: 5px; 
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏪 Beauty Salon Booking Test</h1>
+    
+    <!-- Login Section -->
+    <div class="section">
+        <h2>1. Login</h2>
+        <button onclick="doLogin()">Login as John Doe</button>
+        <div id="loginStatus"></div>
+    </div>
+
+    <!-- Services Section -->
+    <div class="section">
+        <h2>2. Available Services</h2>
+        <button onclick="fetchServices()">Fetch Services</button>
+        <div id="servicesStatus"></div>
+        <div id="servicesList"></div>
+    </div>
+
+    <!-- Booking Section -->
+    <div class="section">
+        <h2>3. Book Appointment</h2>
+        <form id="bookingForm">
+            <div style="margin: 10px 0;">
+                <label>Service:</label>
+                <select id="serviceSelect" name="serviceId" required>
+                    <option value="">Select a service...</option>
+                </select>
+            </div>
+            <div style="margin: 10px 0;">
+                <label>Date:</label>
+                <input type="date" id="appointmentDate" name="appointmentDate" required>
+            </div>
+            <div style="margin: 10px 0;">
+                <label>Time:</label>
+                <select id="appointmentTime" name="appointmentTime" required>
+                    <option value="">Select time...</option>
+                    <option value="09:00">09:00</option>
+                    <option value="09:30">09:30</option>
+                    <option value="10:00">10:00</option>
+                    <option value="10:30">10:30</option>
+                    <option value="11:00">11:00</option>
+                    <option value="11:30">11:30</option>
+                    <option value="12:00">12:00</option>
+                    <option value="14:00">14:00</option>
+                    <option value="14:30">14:30</option>
+                    <option value="15:00">15:00</option>
+                    <option value="15:30">15:30</option>
+                    <option value="16:00">16:00</option>
+                    <option value="16:30">16:30</option>
+                    <option value="17:00">17:00</option>
+                    <option value="17:30">17:30</option>
+                </select>
+            </div>
+            <div style="margin: 10px 0;">
+                <label>Notes (optional):</label>
+                <textarea id="notes" name="notes" rows="3" style="width: 100%;"></textarea>
+            </div>
+            <button type="button" onclick="bookAppointment()">Book Appointment</button>
+        </form>
+        <div id="bookingStatus"></div>
+    </div>
+
+    <!-- My Appointments Section -->
+    <div class="section">
+        <h2>4. My Appointments</h2>
+        <button onclick="fetchMyAppointments()">Fetch My Appointments</button>
+        <div id="appointmentsStatus"></div>
+        <div id="appointmentsList"></div>
+    </div>
+
+    <script>
+        // Set minimum date to today
+        document.getElementById('appointmentDate').min = new Date().toISOString().split('T')[0];
+        
+        let services = [];
+        
+        async function doLogin() {
+            try {
+                document.getElementById('loginStatus').innerHTML = 'Logging in...';
+                
+                const response = await fetch('http://localhost:8000/api/v1/users/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'john.doe@example.com',
+                        password: 'Password123!'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const { user, accessToken, refreshToken } = data.message;
+                    
+                    localStorage.setItem('token', accessToken);
+                    localStorage.setItem('refreshToken', refreshToken);
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    document.getElementById('loginStatus').innerHTML = 
+                        `<span class="success">✅ Logged in as: ${user.firstname} ${user.lastname}</span>`;
+                } else {
+                    document.getElementById('loginStatus').innerHTML = 
+                        `<span class="error">❌ Login failed: ${data.message}</span>`;
+                }
+            } catch (error) {
+                document.getElementById('loginStatus').innerHTML = 
+                    `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        async function fetchServices() {
+            try {
+                document.getElementById('servicesStatus').innerHTML = 'Fetching services...';
+                
+                const response = await fetch('http://localhost:8000/api/v1/services');
+                const data = await response.json();
+                
+                if (data.success) {
+                    services = data.message.services;
+                    document.getElementById('servicesStatus').innerHTML = 
+                        `<span class="success">✅ Found ${services.length} services</span>`;
+                    
+                    // Populate services list
+                    let servicesList = '';
+                    const serviceSelect = document.getElementById('serviceSelect');
+                    serviceSelect.innerHTML = '<option value="">Select a service...</option>';
+                    
+                    services.forEach(service => {
+                        servicesList += `
+                            <div class="service-card">
+                                <h4>${service.name}</h4>
+                                <p><strong>Price:</strong> $${service.price}</p>
+                                <p><strong>Duration:</strong> ${service.duration} minutes</p>
+                                <p><strong>Category:</strong> ${service.category}</p>
+                                <p><strong>Description:</strong> ${service.description}</p>
+                            </div>
+                        `;
+                        
+                        serviceSelect.innerHTML += `<option value="${service._id}">${service.name} - $${service.price}</option>`;
+                    });
+                    
+                    document.getElementById('servicesList').innerHTML = servicesList;
+                } else {
+                    document.getElementById('servicesStatus').innerHTML = 
+                        `<span class="error">❌ Failed to fetch services</span>`;
+                }
+            } catch (error) {
+                document.getElementById('servicesStatus').innerHTML = 
+                    `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        async function bookAppointment() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    document.getElementById('bookingStatus').innerHTML = 
+                        '<span class="error">❌ Please login first</span>';
+                    return;
+                }
+                
+                const serviceId = document.getElementById('serviceSelect').value;
+                const appointmentDate = document.getElementById('appointmentDate').value;
+                const appointmentTime = document.getElementById('appointmentTime').value;
+                const notes = document.getElementById('notes').value;
+                
+                if (!serviceId || !appointmentDate || !appointmentTime) {
+                    document.getElementById('bookingStatus').innerHTML = 
+                        '<span class="error">❌ Please fill in all required fields</span>';
+                    return;
+                }
+                
+                const selectedService = services.find(s => s._id === serviceId);
+                
+                document.getElementById('bookingStatus').innerHTML = 'Booking appointment...';
+                
+                const bookingData = {
+                    serviceId: serviceId,
+                    appointmentDate: appointmentDate,
+                    appointmentTime: appointmentTime,
+                    notes: notes,
+                    price: selectedService?.price || 0,
+                    duration: selectedService?.duration || 30
+                };
+                
+                const response = await fetch('http://localhost:8000/api/v1/appointments/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('bookingStatus').innerHTML = 
+                        '<span class="success">✅ Appointment booked successfully!</span>';
+                    
+                    // Clear the form
+                    document.getElementById('bookingForm').reset();
+                } else {
+                    document.getElementById('bookingStatus').innerHTML = 
+                        `<span class="error">❌ Booking failed: ${data.message || 'Unknown error'}</span>`;
+                }
+            } catch (error) {
+                document.getElementById('bookingStatus').innerHTML = 
+                    `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        async function fetchMyAppointments() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    document.getElementById('appointmentsStatus').innerHTML = 
+                        '<span class="error">❌ Please login first</span>';
+                    return;
+                }
+                
+                document.getElementById('appointmentsStatus').innerHTML = 'Fetching appointments...';
+                
+                const response = await fetch('http://localhost:8000/api/v1/appointments/getMyAppointments', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const appointments = data.message?.appointments || data.data || [];
+                    document.getElementById('appointmentsStatus').innerHTML = 
+                        `<span class="success">✅ Found ${appointments.length} appointments</span>`;
+                    
+                    if (appointments.length === 0) {
+                        document.getElementById('appointmentsList').innerHTML = 
+                            '<p>No appointments found.</p>';
+                    } else {
+                        let appointmentsList = '';
+                        appointments.forEach(apt => {
+                            appointmentsList += `
+                                <div class="service-card">
+                                    <h4>Appointment #${apt._id}</h4>
+                                    <p><strong>Service:</strong> ${apt.serviceId?.name || 'N/A'}</p>
+                                    <p><strong>Date:</strong> ${new Date(apt.appointmentDate).toLocaleDateString()}</p>
+                                    <p><strong>Time:</strong> ${apt.appointmentTime}</p>
+                                    <p><strong>Status:</strong> ${apt.status}</p>
+                                    <p><strong>Price:</strong> $${apt.price}</p>
+                                    ${apt.notes ? `<p><strong>Notes:</strong> ${apt.notes}</p>` : ''}
+                                </div>
+                            `;
+                        });
+                        document.getElementById('appointmentsList').innerHTML = appointmentsList;
+                    }
+                } else {
+                    document.getElementById('appointmentsStatus').innerHTML = 
+                        `<span class="error">❌ Failed to fetch appointments: ${data.message}</span>`;
+                }
+            } catch (error) {
+                document.getElementById('appointmentsStatus').innerHTML = 
+                    `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        // Auto-fetch services on page load
+        window.onload = function() {
+            fetchServices();
+        };
+    </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { ApiError } from "./apiError.js";
+import { ApiError } from "./ApiError.js";
 
 const sendEmail = async (options) => {
     try {

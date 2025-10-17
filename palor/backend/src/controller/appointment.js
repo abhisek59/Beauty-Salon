@@ -190,9 +190,23 @@ const staffAppointments = asyncHandler(async (req, res) => {
         }, "Staff appointments retrieved successfully"));
 });
 
-
-
-
+const deleteAppointment = asyncHandler(async (req, res) => {
+    const { appointmentId } = req.params;
+    
+    if (!appointmentId) {
+        throw new ApiError(400, "Appointment ID is required");
+    }
+    
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) {
+        throw new ApiError(404, "Appointment not found");
+    }
+    
+    await Appointment.findByIdAndDelete(appointmentId);
+    
+    return res.status(200)
+        .json(new ApiResponse(200, null, "Appointment deleted successfully"));
+});
 
 export { 
     createAppointment,
@@ -201,5 +215,6 @@ export {
     getAllAppointments,
     getAppointmentById,
     updateAppointment,
-    staffAppointments
+    staffAppointments,
+    deleteAppointment
 };

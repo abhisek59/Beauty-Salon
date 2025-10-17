@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carousel Images Preview</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f9f9f9; 
+        }
+        .image-preview { 
+            margin: 20px 0; 
+            padding: 20px; 
+            background: white; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        img { 
+            width: 100%; 
+            max-width: 600px; 
+            height: 300px; 
+            object-fit: cover; 
+            border-radius: 8px; 
+        }
+        h2 { color: #d63384; }
+        p { color: #666; }
+    </style>
+</head>
+<body>
+    <h1>Carousel Images for Beauty Salon</h1>
+    
+    <div class="image-preview">
+        <h2>Slide 1: Welcome to Sunshine Threading</h2>
+        <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80" alt="Beauty salon interior">
+        <p>Professional beauty salon interior with modern equipment and comfortable seating</p>
+    </div>
+
+    <div class="image-preview">
+        <h2>Slide 2: Relax, Beautify, Shine</h2>
+        <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80" alt="Professional beauty treatment">
+        <p>Professional beauty treatment showing relaxation and quality service</p>
+    </div>
+
+    <div class="image-preview">
+        <h2>Slide 3: Glow with Confidence</h2>
+        <img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80" alt="Spa and beauty results">
+        <p>Spa and beauty treatment results showing beautiful, glowing skin</p>
+    </div>
+
+    <div style="margin-top: 40px; padding: 20px; background: #e8f4f8; border-radius: 8px;">
+        <h3>To Add Your Own Images:</h3>
+        <ol>
+            <li>Save your photos as .jpg or .png files</li>
+            <li>Recommended size: 1200x600 pixels for best quality</li>
+            <li>Place them in: <code>/frontEnd/frontend/public/images/</code></li>
+            <li>Update the image paths in <code>Home.jsx</code> to use your local images</li>
+        </ol>
+        <p><strong>Example:</strong> Change <code>image: 'https://...'</code> to <code>image: '/images/your-photo.jpg'</code></p>
+    </div>
+</body>
+</html>

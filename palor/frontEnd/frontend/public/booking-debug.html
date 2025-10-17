@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { margin: 5px; padding: 10px 15px; background: #e91e63; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Booking Debug Test</h1>
+    
+    <div class="section">
+        <h2>Step 1: Login</h2>
+        <button onclick="login()">Login</button>
+        <div id="loginStatus"></div>
+    </div>
+
+    <div class="section">
+        <h2>Step 2: Test Booking</h2>
+        <form onsubmit="return false;">
+            <label>Service ID:</label>
+            <input type="text" id="serviceId" value="687e697834fe98296c56533b">
+            
+            <label>Date:</label>
+            <input type="date" id="appointmentDate">
+            
+            <label>Time:</label>
+            <select id="appointmentTime">
+                <option value="">Select time...</option>
+                <option value="09:00">09:00</option>
+                <option value="10:00">10:00</option>
+                <option value="11:00">11:00</option>
+                <option value="14:00">14:00</option>
+                <option value="15:00">15:00</option>
+                <option value="16:00">16:00</option>
+            </select>
+            
+            <label>Notes:</label>
+            <textarea id="notes" placeholder="Optional notes..."></textarea>
+            
+            <label>Price:</label>
+            <input type="number" id="price" value="85">
+            
+            <label>Duration:</label>
+            <input type="number" id="duration" value="60">
+            
+            <button onclick="testBooking()">Test Booking</button>
+        </form>
+        <div id="bookingResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>Debug Information</h2>
+        <div id="debugInfo"></div>
+    </div>
+
+    <script>
+        // Set default date to tomorrow
+        document.getElementById('appointmentDate').value = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+
+        async function login() {
+            try {
+                document.getElementById('loginStatus').innerHTML = 'Logging in...';
+                
+                const response = await fetch('http://localhost:8000/api/v1/users/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'john.doe@example.com',
+                        password: 'Password123!'
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                
+                if (data.success) {
+                    const { user, accessToken, refreshToken } = data.message;
+                    
+                    localStorage.setItem('token', accessToken);
+                    localStorage.setItem('refreshToken', refreshToken);
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    document.getElementById('loginStatus').innerHTML = 
+                        `<span class="success">✅ Logged in as: ${user.firstname} ${user.lastname}</span>`;
+                    
+                    updateDebugInfo();
+                } else {
+                    document.getElementById('loginStatus').innerHTML = 
+                        `<span class="error">❌ Login failed: ${data.message}</span>`;
+                }
+            } catch (error) {
+                document.getElementById('loginStatus').innerHTML = 
+                    `<span class="error">❌ Error: ${error.message}</span>`;
+                console.error('Login error:', error);
+            }
+        }
+
+        async function testBooking() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    document.getElementById('bookingResult').innerHTML = 
+                        '<span class="error">❌ Please login first</span>';
+                    return;
+                }
+
+                const bookingData = {
+                    serviceId: document.getElementById('serviceId').value,
+                    appointmentDate: document.getElementById('appointmentDate').value,
+                    appointmentTime: document.getElementById('appointmentTime').value,
+                    notes: document.getElementById('notes').value,
+                    price: parseInt(document.getElementById('price').value),
+                    duration: parseInt(document.getElementById('duration').value)
+                };
+
+                console.log('Sending booking data:', bookingData);
+                document.getElementById('bookingResult').innerHTML = 'Booking appointment...';
+
+                const response = await fetch('http://localhost:8000/api/v1/appointments/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+
+                const result = await response.json();
+                console.log('Booking response:', result);
+                console.log('Response status:', response.status);
+
+                if (response.ok && result.success) {
+                    document.getElementById('bookingResult').innerHTML = 
+                        `<span class="success">✅ Booking successful! Appointment ID: ${result.message.appointment._id}</span>`;
+                } else {
+                    document.getElementById('bookingResult').innerHTML = 
+                        `<span class="error">❌ Booking failed: ${result.message || result.data || 'Unknown error'}</span>
+                         <br><strong>Status:</strong> ${response.status}
+                         <br><strong>Response:</strong> ${JSON.stringify(result)}`;
+                }
+
+                updateDebugInfo();
+            } catch (error) {
+                document.getElementById('bookingResult').innerHTML = 
+                    `<span class="error">❌ Error: ${error.message}</span>`;
+                console.error('Booking error:', error);
+            }
+        }
+
+        function updateDebugInfo() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            let info = '<h3>Current State:</h3>';
+            info += `<p><strong>Token:</strong> ${token ? 'EXISTS ✅' : 'MISSING ❌'}</p>`;
+            info += `<p><strong>User:</strong> ${user ? 'EXISTS ✅' : 'MISSING ❌'}</p>`;
+            
+            if (token) {
+                try {
+                    // Decode JWT token to check expiry
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    const now = Math.floor(Date.now() / 1000);
+                    const expired = payload.exp < now;
+                    
+                    info += `<p><strong>Token Expires:</strong> ${new Date(payload.exp * 1000).toLocaleString()}</p>`;
+                    info += `<p><strong>Token Status:</strong> ${expired ? 'EXPIRED ❌' : 'VALID ✅'}</p>`;
+                } catch (e) {
+                    info += `<p><strong>Token Status:</strong> INVALID ❌</p>`;
+                }
+            }
+            
+            if (user) {
+                try {
+                    const userData = JSON.parse(user);
+                    info += `<p><strong>User ID:</strong> ${userData._id}</p>`;
+                    info += `<p><strong>Email:</strong> ${userData.email}</p>`;
+                } catch (e) {
+                    info += `<p class="error">Error parsing user data</p>`;
+                }
+            }
+            
+            document.getElementById('debugInfo').innerHTML = info;
+        }
+
+        // Auto-update debug info on page load
+        window.onload = function() {
+            updateDebugInfo();
+        };
+    </script>
+</body>
+</html>

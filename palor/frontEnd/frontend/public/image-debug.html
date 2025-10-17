@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Debug Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5; 
+        }
+        .test-container { 
+            margin: 20px 0; 
+            padding: 20px; 
+            background: white; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        img { 
+            max-width: 100%; 
+            height: 200px; 
+            object-fit: cover; 
+            border: 2px solid #ddd; 
+            margin: 10px 0;
+            display: block;
+        }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Carousel Images Debug Test</h1>
+    
+    <div class="test-container">
+        <h2>Testing Image Loading</h2>
+        
+        <h3>Image 1: salon-1.jpg</h3>
+        <img src="/images/salon-1.jpg" alt="Salon 1" 
+             onload="document.getElementById('img1-status').innerHTML='✅ SUCCESS: salon-1.jpg loaded'; document.getElementById('img1-status').className='success';"
+             onerror="document.getElementById('img1-status').innerHTML='❌ ERROR: salon-1.jpg failed to load'; document.getElementById('img1-status').className='error';">
+        <p id="img1-status">Loading...</p>
+        
+        <h3>Image 2: threading-salon.webp</h3>
+        <img src="/images/threading-salon.webp" alt="Threading Salon" 
+             onload="document.getElementById('img2-status').innerHTML='✅ SUCCESS: threading-salon.webp loaded'; document.getElementById('img2-status').className='success';"
+             onerror="document.getElementById('img2-status').innerHTML='❌ ERROR: threading-salon.webp failed to load'; document.getElementById('img2-status').className='error';">
+        <p id="img2-status">Loading...</p>
+        
+        <h3>Image 3: thr-1.webp</h3>
+        <img src="/images/thr-1.webp" alt="Threading 1" 
+             onload="document.getElementById('img3-status').innerHTML='✅ SUCCESS: thr-1.webp loaded'; document.getElementById('img3-status').className='success';"
+             onerror="document.getElementById('img3-status').innerHTML='❌ ERROR: thr-1.webp failed to load'; document.getElementById('img3-status').className='error';">
+        <p id="img3-status">Loading...</p>
+        
+        <h3>Image 4: th-3.webp</h3>
+        <img src="/images/th-3.webp" alt="Threading 3" 
+             onload="document.getElementById('img4-status').innerHTML='✅ SUCCESS: th-3.webp loaded'; document.getElementById('img4-status').className='success';"
+             onerror="document.getElementById('img4-status').innerHTML='❌ ERROR: th-3.webp failed to load'; document.getElementById('img4-status').className='error';">
+        <p id="img4-status">Loading...</p>
+    </div>
+    
+    <div class="test-container">
+        <h2>Image URLs Being Used in Carousel:</h2>
+        <ul>
+            <li><code>/images/salon-1.jpg</code></li>
+            <li><code>/images/threading-salon.webp</code></li>
+            <li><code>/images/thr-1.webp</code></li>
+        </ul>
+    </div>
+    
+    <div class="test-container">
+        <h2>Next Steps:</h2>
+        <ol>
+            <li>Check which images load successfully above</li>
+            <li>If images don't load, there might be a file permission or path issue</li>
+            <li>If images load here but not in carousel, there might be a React/CSS issue</li>
+        </ol>
+        <p><strong>Go back to your site:</strong> <a href="/">Home Page with Carousel</a></p>
+    </div>
+</body>
+</html>

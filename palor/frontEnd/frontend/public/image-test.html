@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        img { max-width: 300px; margin: 10px; border: 2px solid #ccc; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Image Loading Test</h1>
+    
+    <div>
+        <h3>Image 1: salon-1.jpg</h3>
+        <img src="/images/salon-1.jpg" alt="Salon 1" onload="console.log('salon-1.jpg loaded successfully')" onerror="console.error('Failed to load salon-1.jpg'); this.style.border='2px solid red';">
+        <p>Path: /images/salon-1.jpg</p>
+    </div>
+
+    <div>
+        <h3>Image 2: threading-salon.webp</h3>
+        <img src="/images/threading-salon.webp" alt="Threading Salon" onload="console.log('threading-salon.webp loaded successfully')" onerror="console.error('Failed to load threading-salon.webp'); this.style.border='2px solid red';">
+        <p>Path: /images/threading-salon.webp</p>
+    </div>
+
+    <div>
+        <h3>Image 3: thr-1.webp</h3>
+        <img src="/images/thr-1.webp" alt="Threading 1" onload="console.log('thr-1.webp loaded successfully')" onerror="console.error('Failed to load thr-1.webp'); this.style.border='2px solid red';">
+        <p>Path: /images/thr-1.webp</p>
+    </div>
+
+    <script>
+        console.log('Image test page loaded');
+        console.log('Current URL:', window.location.href);
+    </script>
+</body>
+</html>
